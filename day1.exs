@@ -1,6 +1,11 @@
 defmodule Day1 do
     def fuel(mass) do
-        div(mass, 3) - 2
+        f = div(mass, 3) - 2
+        if f <= 0 do
+            0
+        else
+            f + fuel(f)
+        end
     end
 end
 
