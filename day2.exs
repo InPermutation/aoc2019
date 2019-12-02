@@ -22,7 +22,16 @@ mem = IO.read(:stdio, :all)
     |> String.split(",")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&String.to_integer/1)
-    |> List.replace_at(1, 12)
-    |> List.replace_at(2, 2)
 
-IO.puts hd Day2.run(mem)
+target = 19690720
+pairs = for noun <- 0..99, verb <- 0..99, do: {noun, verb}
+
+{noun, verb} = Enum.find(pairs, fn {noun, verb} ->
+        prog = mem |> List.replace_at(1, noun) |> List.replace_at(2, verb)
+        res = Day2.run(prog)
+        output = hd res
+
+        target == output
+    end)
+
+IO.puts noun * 100 + verb
