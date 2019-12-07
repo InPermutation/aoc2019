@@ -14,6 +14,15 @@ defmodule Day4 do
             digits_never_decrease(rest, a)
         end
     end
+
+    def exactly_two_adjacent_digits_same(s) do
+        String.to_charlist(s)
+            |> Enum.chunk_by(&identity/1)
+            |> Enum.filter(fn chunk -> Enum.count(chunk) == 2 end)
+            |> Enum.any?
+    end
+
+    defp identity(x), do: x
 end
 
 
@@ -22,6 +31,7 @@ end
     |> Stream.filter(&Day4.six_digits/1)
     |> Stream.filter(&Day4.two_adjacent_digits_same/1)
     |> Stream.filter(&Day4.digits_never_decrease/1)
+    |> Stream.filter(&Day4.exactly_two_adjacent_digits_same/1)
     |> Enum.count
     |> IO.puts
 
