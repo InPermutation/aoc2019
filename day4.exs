@@ -5,14 +5,9 @@ defmodule Day4 do
     def two_adjacent_digits_same(<<_, rest::binary>>), do: two_adjacent_digits_same(rest)
     def two_adjacent_digits_same(""), do: false
 
-    def digits_never_decrease(s, last \\ ?0)
-    def digits_never_decrease("", _), do: true
-    def digits_never_decrease(<<a, rest::binary>>, last) do
-        if a < last do
-            false
-        else
-            digits_never_decrease(rest, a)
-        end
+    def digits_never_decrease(s) do
+        charlist = String.to_charlist(s)
+        charlist == Enum.sort(charlist)
     end
 
     def exactly_two_adjacent_digits_same(s) do
