@@ -1,5 +1,5 @@
 defmodule Day3 do
-    def pathToSegment(path, pt \\ {0, 0}, res \\ []) do
+    def pathToSegment(path, pt \\ {0, 0, 0}, res \\ []) do
         if path == [] do
             res
         else
@@ -13,13 +13,13 @@ defmodule Day3 do
     defp segment(pt, motion) do
         {dir, val} = String.split_at(motion, 1)
         d = String.to_integer(val)
-        {x, y} = pt
+        {x, y, _d0} = pt
 
         case dir do
-            "U" -> {x, y + d}
-            "D" -> {x, y - d}
-            "L" -> {x - d, y}
-            "R" -> {x + d, y}
+            "U" -> {x, y + d, d}
+            "D" -> {x, y - d, d}
+            "L" -> {x - d, y, d}
+            "R" -> {x + d, y, d}
         end
     end
 
@@ -42,19 +42,19 @@ defmodule Day3 do
     end
 
     def is_horiz(pt) do
-        {{x1, y1}, {x2, y2}} = pt
+        {{x1, y1, _d1}, {x2, y2, _d2}} = pt
         x1 != x2 && y1 == y2
     end
 
     def is_vert(pt) do
-        {{x1, y1}, {x2, y2}} = pt
+        {{x1, y1, _d1}, {x2, y2, _d2}} = pt
         x1 == x2 && y1 != y2
     end
 
     defp hz_intersect(h, v) do
-        {{x1, y}, {x2, y}} = h
-        {{x, y1}, {x, y2}} = v
-        i = {x, y}
+        {{x1, y, d1}, {x2, y, _d1}} = h
+        {{x, y1, d2}, {x, y2, _d2}} = v
+        i = {x, y, :todo}
         if Enum.member?(x1..x2, x) &&
             Enum.member?(y1..y2, y) do
             i
@@ -64,7 +64,7 @@ defmodule Day3 do
     end
 
     def distance(pt) do
-        {x, y} = pt
+        {x, y, _d} = pt
         abs(x) + abs(y)
     end
 end
