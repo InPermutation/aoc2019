@@ -8,13 +8,14 @@ defmodule Day6 do
     def count_orbits(map) do
         Map.keys(map)
             |> Enum.map(&(hops_to_com(&1, map)))
+            |> Enum.map(&Enum.count/1)
             |> Enum.sum
     end
 
-    def hops_to_com("COM", _), do: 0
+    def hops_to_com("COM", _), do: []
     def hops_to_com(satellite, map) do
         next = Map.get(map, satellite)
-        1 + hops_to_com(next, map)
+        [satellite | hops_to_com(next, map)]
     end
 
 end
