@@ -13,6 +13,10 @@ defmodule Day5 do
                 2 -> {&*/2, [:read, :read, :write]}
                 3 -> {&input/0, [:write]}
                 4 -> {&IO.puts/1, [:read]}
+                5 -> {&nonzero/1, [:read, :cond]}
+                6 -> {&zero/1, [:read, :cond]}
+                7 -> {&lt/2, [:read, :read, :write]}
+                8 -> {&eq/2, [:read, :read, :write]}
             end
 
             {new_mem, new_pc} = execute(f, verbs, modes, [], mem, pc + 1)
@@ -20,12 +24,41 @@ defmodule Day5 do
         end
     end
 
-    def fetch(mem, ix) do
-        Enum.fetch!(mem, ix)
+    def fetch(mem, ix, mode \\ 1) do
+        val = Enum.fetch!(mem, ix)
+        if mode == 1 do
+            val
+        else
+            Enum.fetch!(mem, val)
+        end
     end
 
     def store(mem, ix, val) do
         List.replace_at(mem, ix, val)
+    end
+
+    def nonzero(x) do
+        x != 0
+    end
+
+    def zero(x) do
+        x == 0
+    end
+
+    def lt(a, b) do
+        if a < b do
+            1
+        else
+            0
+        end
+    end
+
+    def eq(a, b) do
+        if a == b do
+            1
+        else
+            0
+        end
     end
 
     def execute(f, [], _, args, mem, pc) do
@@ -46,12 +79,19 @@ defmodule Day5 do
     end
 
     def execute(f, [:read|verbs], [mode|modes], args, mem, pc) do
-        loc = fetch(mem, pc)
-        val = case mode do
-            0 -> fetch(mem, loc)
-            1 -> loc
-        end
+        val = fetch(mem, pc, mode)
         execute(f, verbs, modes, args ++ [val], mem, pc + 1)
+    end
+
+    def execute(comparator, [:cond], [mode | _], [condition], mem, pc) do
+        if comparator.(condition) do
+            { mem, fetch(mem, pc, mode) }
+
+        else
+            { mem, pc + 1 }
+        end
+
+
     end
 
     defp input(), do: String.to_integer(String.trim(IO.gets("")))
