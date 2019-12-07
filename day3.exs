@@ -13,13 +13,13 @@ defmodule Day3 do
     defp segment(pt, motion) do
         {dir, val} = String.split_at(motion, 1)
         d = String.to_integer(val)
-        {x, y, _d0} = pt
+        {x, y, d0} = pt
 
         case dir do
-            "U" -> {x, y + d, d}
-            "D" -> {x, y - d, d}
-            "L" -> {x - d, y, d}
-            "R" -> {x + d, y, d}
+            "U" -> {x, y + d, d0 + d}
+            "D" -> {x, y - d, d0 + d}
+            "L" -> {x - d, y, d0 + d}
+            "R" -> {x + d, y, d0 + d}
         end
     end
 
@@ -54,19 +54,24 @@ defmodule Day3 do
     defp hz_intersect(h, v) do
         {{x1, y, d1}, {x2, y, _d1}} = h
         {{x, y1, d2}, {x, y2, _d2}} = v
-        i = {x, y, :todo}
-        if Enum.member?(x1..x2, x) &&
-            Enum.member?(y1..y2, y) do
-            i
-        else
+
+        pd1 = d1 + abs(x - x1)
+        pd2 = d2 + abs(y - y1)
+
+        i = {x, y, pd1 + pd2}
+        if pd1 + pd2 == 0 do
             nil
+        else
+            if Enum.member?(x1..x2, x) &&
+                Enum.member?(y1..y2, y) do
+                i
+            else
+                nil
+            end
         end
     end
 
-    def distance(pt) do
-        {x, y, _d} = pt
-        abs(x) + abs(y)
-    end
+    def steps({_, _, d}), do: d
 end
 
 IO.stream(:stdio, :line)
@@ -75,7 +80,7 @@ IO.stream(:stdio, :line)
     |> Stream.map(&Day3.pathToSegment/1)
     |> Enum.to_list
     |> Day3.intersections
-    |> Enum.min_by(&Day3.distance/1)
+    |> Enum.min_by(&Day3.steps/1)
     |> IO.inspect()
-    |> Day3.distance()
+    |> Day3.steps()
     |> IO.puts()
