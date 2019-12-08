@@ -1,31 +1,44 @@
 defmodule Day7 do
-    def run_with(_mem, _phase, _input_signal) do
-        raise "not impl"
+    def run_with(mem, input) do
+        state = run(%{
+            pc: 0,
+            mem: mem,
+            input: input,
+            output: [],
+            halted: false
+        })
+
+        [res] = state.output
+        res
     end
 
-    def run(mem, input, output, pc \\ 0) do
-        word = fetch(mem, pc)
+    def run(state) do
+        if state.halted do
+            state
+        else
+            run(step(state))
+        end
+    end
+
+    def step(state) do
+        word = fetch(state.mem, state.pc)
         decoded = decode(word)
         op = hd decoded
         modes = tl decoded
 
-        if op == 99 do
-            mem
-        else
-            {f, verbs} = case op do
-                1 -> {&+/2, [:read, :read, :write]}
-                2 -> {&*/2, [:read, :read, :write]}
-                #3 -> {&input/0, [:write]}
-                #4 -> {&output/1, [:read]}
-                5 -> {&nonzero/1, [:read, :cond]}
-                6 -> {&zero/1, [:read, :cond]}
-                7 -> {&lt/2, [:read, :read, :write]}
-                8 -> {&eq/2, [:read, :read, :write]}
-            end
-
-            {new_mem, new_pc} = execute(f, verbs, modes, [], mem, pc + 1)
-            run(new_mem, input, output, new_pc)
+        {f, verbs} = case op do
+            1 -> {&+/2, [:read, :read, :write]}
+            2 -> {&*/2, [:read, :read, :write]}
+            3 -> {&identity/1, [:input, :write]}
+            4 -> {nil, [:read, :output]}
+            5 -> {&nonzero/1, [:read, :cond]}
+            6 -> {&zero/1, [:read, :cond]}
+            7 -> {&lt/2, [:read, :read, :write]}
+            8 -> {&eq/2, [:read, :read, :write]}
+            99 -> {nil, [:halt]}
         end
+
+        execute(f, verbs, modes, [], advance(state))
     end
 
     def fetch(mem, ix, mode \\ 1) do
@@ -40,6 +53,8 @@ defmodule Day7 do
     def store(mem, ix, val) do
         List.replace_at(mem, ix, val)
     end
+
+    def identity(x), do: x
 
     def nonzero(x) do
         x != 0
@@ -65,37 +80,47 @@ defmodule Day7 do
         end
     end
 
-    def execute(f, [], _, args, mem, pc) do
+    def execute(f, [], _, args, state) do
         :ok = apply(f, args)
-        {
-            mem,
-            pc
-        }
+        state
     end
 
-    def execute(f, [:write], [0 | _], args, mem, pc) do
+    def execute(f, [:write], [0 | _], args, state) do
         res = apply(f, args)
-        loc = fetch(mem, pc)
-        {
-            store(mem, loc, res),
-            pc + 1
-        }
+        loc = fetch(state.mem, state.pc)
+        advance(%{ state |
+            mem: store(state.mem, loc, res)
+        })
     end
 
-    def execute(f, [:read|verbs], [mode|modes], args, mem, pc) do
-        val = fetch(mem, pc, mode)
-        execute(f, verbs, modes, args ++ [val], mem, pc + 1)
+    def execute(f, [:read|verbs], [mode|modes], args, state) do
+        val = fetch(state.mem, state.pc, mode)
+        execute(f, verbs, modes, args ++ [val], advance(state))
     end
 
-    def execute(comparator, [:cond], [mode | _], [condition], mem, pc) do
+    def execute(comparator, [:cond], [mode|_], [condition], state) do
         if comparator.(condition) do
-            { mem, fetch(mem, pc, mode) }
-
+            %{ state | pc: fetch(state.mem, state.pc, mode) }
         else
-            { mem, pc + 1 }
+            advance(state)
         end
+    end
 
+    def execute(f, [:input|verbs], modes, args, state) do
+        [val | remaining] = state.input
+        execute(f, verbs, modes, args ++ [val], %{state | input: remaining})
+    end
 
+    def execute(nil, [:output], _, [arg], state) do
+        %{state | output: state.output ++ [arg]}
+    end
+
+    def execute(nil, [:halt], _, [], state) do
+        %{state | halted: true}
+    end
+
+    def advance(state) do
+        %{ state | pc: state.pc + 1 }
     end
 
     def decode(abcde) do
@@ -124,10 +149,8 @@ rom = IO.gets("")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&String.to_integer/1)
 
-for sequence <- Day7.permutations(Enum.to_list(0..4)) do
-    thruster = Enum.reduce(sequence, 0, &(Day7.run_with(rom, &1, &2)))
-    thruster
+outputs = for sequence <- Day7.permutations(Enum.to_list(0..4)) do
+    Enum.reduce(sequence, 0, &(Day7.run_with(rom, [&1, &2])))
 end
-|> Enum.max
 
-
+IO.inspect(Enum.max(outputs))
