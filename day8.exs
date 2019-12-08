@@ -14,13 +14,8 @@ defmodule Day8 do
             |> Enum.map(&composite_one/1)
     end
 
-    def composite_one({fore_pix, aft_pix}) do
-        if fore_pix == ?2 do
-            aft_pix
-        else
-            fore_pix
-        end
-    end
+    def composite_one({?2, aft}), do: aft
+    def composite_one({fore, _aft}), do: fore
 
     def puts(s) do
         Enum.map(s, fn ch -> if ch == ?1 do '*' else ' ' end end)
