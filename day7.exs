@@ -20,6 +20,54 @@ defmodule Day7 do
         end
     end
 
+    def initialize_feedback_loop(sequence, rom) do
+        amp_a = run_until_halted_or_output(%{
+                pc: 0,
+                mem: rom,
+                input: [hd(sequence), 0],
+                output: [],
+                halted: false
+            })
+        other_amps =
+            Enum.scan(tl(sequence), amp_a, fn phase, prev ->
+                run_until_halted_or_output(%{
+                    pc: 0,
+                    mem: rom,
+                    input: [phase, hd(prev.output)],
+                    output: [],
+                    halted: false
+                }) end)
+        [amp_a | other_amps]
+    end
+
+    def feedback_loop([a,b,c,d,e]) do
+        [input] = e.output
+        next_a = run_until_halted_or_output(%{ a |
+                input: [input],
+                output: []
+        })
+        if next_a.halted do
+            input
+        else
+            other_amps = Enum.scan([b, c, d, e], next_a, fn amp, prev ->
+                [prev_output] = prev.output
+                run_until_halted_or_output(%{ amp |
+                    input: [prev_output],
+                    output: []
+                }) end)
+
+            feedback_loop([next_a | other_amps])
+        end
+    end
+
+    def run_until_halted_or_output(state) do
+        if state.halted or state.output != [] do
+            state
+        else
+            run_until_halted_or_output(step(state))
+        end
+    end
+
     def step(state) do
         word = fetch(state.mem, state.pc)
         decoded = decode(word)
@@ -153,4 +201,12 @@ outputs = for sequence <- Day7.permutations(Enum.to_list(0..4)) do
     Enum.reduce(sequence, 0, &(Day7.run_with(rom, [&1, &2])))
 end
 
-IO.inspect(Enum.max(outputs))
+IO.inspect(Enum.max(outputs), label: "Part 1")
+
+
+feedback = for sequence <- Day7.permutations(Enum.to_list(5..9)) do
+    amps = Day7.initialize_feedback_loop(sequence, rom)
+    Day7.feedback_loop(amps)
+end
+
+IO.inspect(Enum.max(feedback), label: "Part 2")
