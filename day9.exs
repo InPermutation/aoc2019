@@ -1,4 +1,22 @@
 defmodule Day9 do
+    def init(mem) do
+        %{
+            pc: 0,
+            mem: mem,
+            halted: false,
+            input: [],
+            output: []
+        }
+    end
+
+    def run(state) do
+        if state.halted do
+            state
+        else
+            run(step(state))
+        end
+    end
+
     def step(state) do
         word = fetch(state.mem, state.pc)
         decoded = decode(word)
@@ -21,16 +39,29 @@ defmodule Day9 do
     end
 
     def fetch(mem, ix, mode \\ 1) do
-        val = Enum.fetch!(mem, ix)
+        val = direct_fetch_or_zero(mem, ix)
         if mode == 1 do
             val
         else
+            direct_fetch_or_zero(mem, val)
+        end
+    end
+
+    def direct_fetch_or_zero(mem, val) do
+        if val < Enum.count(mem) do
             Enum.fetch!(mem, val)
+        else
+            0
         end
     end
 
     def store(mem, ix, val) do
-        List.replace_at(mem, ix, val)
+        size = Enum.count(mem)
+        if ix < size do
+            List.replace_at(mem, ix, val)
+        else
+            store(mem ++ List.duplicate(0, size - ix + 1), ix, val)
+        end
     end
 
     def identity(x), do: x
@@ -118,3 +149,6 @@ rom = IO.gets("")
     |> String.split(",")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&String.to_integer/1)
+
+state = Day9.init(rom)
+IO.inspect(Day9.run(state).output)
