@@ -4,7 +4,7 @@ defmodule Day9 do
             pc: 0,
             mem: mem,
             halted: false,
-            input: [],
+            input: [1],
             output: [],
             relative_base: 0
         }
