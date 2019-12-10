@@ -49,7 +49,6 @@ defmodule Day9 do
             1 -> val
             2 -> direct_fetch_or_zero(mem, val + state.relative_base)
         end
-        IO.inspect(%{ix: ix, val: val, res: res, rb: state.relative_base})
         res
     end
 
@@ -101,9 +100,13 @@ defmodule Day9 do
         state
     end
 
-    def execute(f, [:write], [0 | _], args, state) do
+    def execute(f, [:write], [mode | _], args, state) do
         res = apply(f, args)
-        loc = fetch(state)
+        offset = case mode do
+            0 -> 0
+            2 -> state.relative_base
+        end
+        loc = fetch(state) + offset
         advance(%{ state |
             mem: store(state.mem, loc, res)
         })
@@ -162,4 +165,5 @@ rom = IO.gets("")
     |> Enum.map(&String.to_integer/1)
 
 state = Day9.init(rom)
-IO.inspect(Day9.run(state).output)
+[keycode] = Day9.run(state).output
+IO.inspect(keycode)
