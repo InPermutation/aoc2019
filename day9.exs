@@ -5,7 +5,8 @@ defmodule Day9 do
             mem: mem,
             halted: false,
             input: [],
-            output: []
+            output: [],
+            relative_base: 0
         }
     end
 
@@ -18,7 +19,7 @@ defmodule Day9 do
     end
 
     def step(state) do
-        word = fetch(state.mem, state.pc)
+        word = fetch(state, 1)
         decoded = decode(word)
         op = hd decoded
         modes = tl decoded
@@ -32,19 +33,24 @@ defmodule Day9 do
             6 -> {&zero/1, [:read, :cond]}
             7 -> {&lt/2, [:read, :read, :write]}
             8 -> {&eq/2, [:read, :read, :write]}
+            9 -> {nil, [:read, :rel]}
             99 -> {nil, [:halt]}
         end
 
         execute(f, verbs, modes, [], advance(state))
     end
 
-    def fetch(mem, ix, mode \\ 1) do
+    def fetch(state, mode \\ 1) do
+        mem = state.mem
+        ix = state.pc
         val = direct_fetch_or_zero(mem, ix)
-        if mode == 1 do
-            val
-        else
-            direct_fetch_or_zero(mem, val)
+        res = case mode do
+            0 -> direct_fetch_or_zero(mem, val)
+            1 -> val
+            2 -> direct_fetch_or_zero(mem, val + state.relative_base)
         end
+        IO.inspect(%{ix: ix, val: val, res: res, rb: state.relative_base})
+        res
     end
 
     def direct_fetch_or_zero(mem, val) do
@@ -60,7 +66,7 @@ defmodule Day9 do
         if ix < size do
             List.replace_at(mem, ix, val)
         else
-            store(mem ++ List.duplicate(0, size - ix + 1), ix, val)
+            store(mem ++ List.duplicate(0, ix - size + 1), ix, val)
         end
     end
 
@@ -97,20 +103,20 @@ defmodule Day9 do
 
     def execute(f, [:write], [0 | _], args, state) do
         res = apply(f, args)
-        loc = fetch(state.mem, state.pc)
+        loc = fetch(state)
         advance(%{ state |
             mem: store(state.mem, loc, res)
         })
     end
 
     def execute(f, [:read|verbs], [mode|modes], args, state) do
-        val = fetch(state.mem, state.pc, mode)
+        val = fetch(state, mode)
         execute(f, verbs, modes, args ++ [val], advance(state))
     end
 
     def execute(comparator, [:cond], [mode|_], [condition], state) do
         if comparator.(condition) do
-            %{ state | pc: fetch(state.mem, state.pc, mode) }
+            %{ state | pc: fetch(state, mode) }
         else
             advance(state)
         end
@@ -127,6 +133,11 @@ defmodule Day9 do
 
     def execute(nil, [:halt], _, [], state) do
         %{state | halted: true}
+    end
+
+    def execute(nil, [:rel], _, args, state) do
+        [val] = args
+        %{ state | relative_base: state.relative_base + val }
     end
 
     def advance(state) do
