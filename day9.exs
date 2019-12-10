@@ -1,10 +1,10 @@
 defmodule Day9 do
-    def init(mem) do
+    def init(mem, input) do
         %{
             pc: 0,
             mem: mem,
             halted: false,
-            input: [1],
+            input: input,
             output: [],
             relative_base: 0
         }
@@ -164,6 +164,10 @@ rom = IO.gets("")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&String.to_integer/1)
 
-state = Day9.init(rom)
+state = Day9.init(rom, [1])
 [keycode] = Day9.run(state).output
-IO.inspect(keycode)
+IO.inspect(keycode, label: "Part 1")
+
+state = Day9.init(rom, [2])
+[coordinates] = Day9.run(state).output
+IO.inspect(coordinates, label: "Part 2")
