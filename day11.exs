@@ -185,6 +185,25 @@ defmodule Day11 do
 
         [de, c, b, a]
     end
+
+    def visualize({hull, _loc, _dir}) do
+        keys = Map.keys(hull)
+        {x_min, x_max} = Enum.min_max(Enum.map(keys, fn {x, _y} -> x end))
+        {y_min, y_max} = Enum.min_max(Enum.map(keys, fn {_x, y} -> y end))
+
+        for y <- y_min..y_max do
+            for x <- x_min..x_max do
+                pix = case hull[{x, y}] do
+                    nil -> ' '
+                    0 -> ' '
+                    1 -> '#'
+                end
+                IO.write(pix)
+            end
+            IO.puts("")
+        end
+
+    end
 end
 
 rom = IO.gets("")
@@ -195,3 +214,7 @@ rom = IO.gets("")
 {hull, _loc, _dir} = Day11.run_robot(Day11.init(rom, [0]))
 
 Enum.count(hull) |> IO.inspect(label: "Part 1")
+
+IO.puts("Part 2:")
+Day11.run_robot(Day11.init(rom, [1]), %{{0, 0} => 1})
+    |> Day11.visualize
