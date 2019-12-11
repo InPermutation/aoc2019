@@ -50,6 +50,25 @@ defmodule Day10 do
     def gcd(a, b) when a < b, do: gcd(b, a)
     def gcd(a, 0), do: a
     def gcd(a, b), do: gcd(b, rem(a, b))
+
+    def angle(asteroid, origin) do
+        {x, y} = sub(asteroid, origin)
+        ap = :math.atan2(y, x)
+        # start at top, go clockwise:
+        if ap < (-:math.pi / 2) do
+            ap + (2 * :math.pi)
+        else
+            ap
+        end
+    end
+
+    def vaporization_order(_origin, []), do: []
+    def vaporization_order(origin, asteroids) do
+        visible = visible_from(origin, asteroids)
+        vaporized = Enum.sort_by(visible, fn asteroid -> angle(asteroid, origin) end)
+
+        vaporized ++ vaporization_order(origin, asteroids -- visible)
+    end
 end
 
 asteroids = IO.stream(:stdio, :line)
@@ -64,3 +83,7 @@ monitoring_station = asteroids
 Day10.visible_from(monitoring_station, asteroids)
     |> Enum.count
     |> IO.inspect(label: "Part 1")
+
+Day10.vaporization_order(monitoring_station, List.delete(asteroids, monitoring_station))
+    |> Enum.at(200 - 1)
+    |> IO.inspect(label: "Part 2")
