@@ -13,11 +13,10 @@ defmodule Day10 do
     def visible_from(origin, asteroids) do
         {max_x, max_y} = Enum.max_by(asteroids, fn {x, y} -> max(x, y) end)
         biggest_coord = max(max_x, max_y)
-        others = asteroids -- [origin]
+        others = List.delete(asteroids, origin)
         blocked = blocked_spaces(others, origin, biggest_coord)
-        visible = others -- blocked
 
-        Enum.count(visible)
+        others -- blocked
     end
 
     def blocked_spaces(others, origin, biggest_coord) do
@@ -57,7 +56,11 @@ asteroids = IO.stream(:stdio, :line)
     |> Stream.map(&String.trim/1)
     |> Day10.to_pointslist
 
-asteroids
-    |> Enum.map(fn asteroid -> Day10.visible_from(asteroid, asteroids) end)
-    |> Enum.max
+monitoring_station = asteroids
+    |> Enum.max_by(fn asteroid ->
+        Enum.count(Day10.visible_from(asteroid, asteroids))
+    end)
+
+Day10.visible_from(monitoring_station, asteroids)
+    |> Enum.count
     |> IO.inspect(label: "Part 1")
