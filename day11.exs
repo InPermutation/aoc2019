@@ -7,7 +7,7 @@ defmodule Day11 do
             [color, turn] = state.output
             hull = Map.put(hull, loc, color)
             {x, y} = loc
-            #IO.inspect([loc: loc, dir: dir, turn: turn], label: "before")
+
             {loc, dir} = case {turn, dir} do
                 {0, ?U} -> {{x - 1, y}, ?L}
                 {1, ?U} -> {{x + 1, y}, ?R}
