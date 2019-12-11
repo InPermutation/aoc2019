@@ -1,4 +1,40 @@
 defmodule Day11 do
+    def run_robot(state, hull \\ %{}, loc \\ {0, 0}, dir \\ ?U) do
+        state = run_until_2_outputs_or_stopped(state)
+        if state.halted do
+            {hull, loc, dir}
+        else
+            [color, turn] = state.output
+            hull = Map.put(hull, loc, color)
+            {x, y} = loc
+            #IO.inspect([loc: loc, dir: dir, turn: turn], label: "before")
+            {loc, dir} = case {turn, dir} do
+                {0, ?U} -> {{x - 1, y}, ?L}
+                {1, ?U} -> {{x + 1, y}, ?R}
+                {0, ?L} -> {{x, y - 1}, ?D}
+                {1, ?L} -> {{x, y + 1}, ?U}
+                {0, ?R} -> {{x, y + 1}, ?U}
+                {1, ?R} -> {{x, y - 1}, ?D}
+                {0, ?D} -> {{x + 1, y}, ?R}
+                {1, ?D} -> {{x - 1, y}, ?L}
+            end
+            run_robot(%{state | input: [get_color(hull, loc)], output: []}, hull, loc, dir)
+        end
+    end
+
+    def run_until_2_outputs_or_stopped(state) do
+        if state.halted or Enum.count(state.output) >= 2 do
+            state
+        else
+            run_until_2_outputs_or_stopped(step(state))
+        end
+    end
+
+    def get_color(hull, loc) do
+        v = hull[loc]
+        if v == nil, do: 0, else: v
+    end
+
     def init(mem, input) do
         %{
             pc: 0,
@@ -8,14 +44,6 @@ defmodule Day11 do
             output: [],
             relative_base: 0
         }
-    end
-
-    def run(state) do
-        if state.halted do
-            state
-        else
-            run(step(state))
-        end
     end
 
     def step(state) do
@@ -164,10 +192,6 @@ rom = IO.gets("")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&String.to_integer/1)
 
-state = Day11.init(rom, [1])
-[keycode] = Day11.run(state).output
-IO.inspect(keycode, label: "Part 1")
+{hull, _loc, _dir} = Day11.run_robot(Day11.init(rom, [0]))
 
-state = Day11.init(rom, [2])
-[coordinates] = Day11.run(state).output
-IO.inspect(coordinates, label: "Part 2")
+Enum.count(hull) |> IO.inspect(label: "Part 1")
