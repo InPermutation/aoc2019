@@ -1,6 +1,6 @@
 defmodule Intcode do
 
-    def init(mem, input) do
+    def init(mem, input \\ []) do
         %{
             pc: 0,
             mem: mem,
