@@ -1,23 +1,6 @@
 defmodule Day15 do
     def breadth_first_search(map, [s | frontier], terminate?) do
         [state: state, loc: loc] = s
-        if rem(Enum.count(map), 1000) == 0 do
-            IO.inspect([loc: loc, fsize: Enum.count(frontier), msize: Enum.count(map)])
-            {{xmin, _}, {xmax, _}} = Enum.min_max_by(Map.keys(map), fn {x, _} -> x end)
-            {{_, ymin}, {_, ymax}} = Enum.min_max_by(Map.keys(map), fn {_, y} -> y end)
-
-            for y <- ymin..ymax do
-                for x <- xmin..xmax do
-                    t = Map.get(map, {x, y})
-                    IO.write(case t do
-                        nil -> '.'
-                        :wall -> '#'
-                        _ -> ' '
-                    end)
-                end
-                IO.puts("")
-            end
-        end
         next_states = generate_next_states(state, loc, map, frontier)
 
         d = Map.fetch!(map, loc)
@@ -30,6 +13,12 @@ defmodule Day15 do
         else
             breadth_first_search(map, frontier, terminate?)
         end
+    end
+
+    def farthest_square(map) do
+        Map.values(map)
+            |> Enum.filter(fn v -> v != :wall end)
+            |> Enum.max
     end
 
     def distance_to([state: _state, loc: loc], map) do
@@ -104,3 +93,8 @@ d = Day15.distance_to(oxy, map)
 
 IO.inspect(d, label: "Part 1")
 
+[state: _, loc: loc] = oxy
+map = %{ loc => 0 }
+frontier = [ oxy ]
+{ map, [] } = Day15.breadth_first_search(map, frontier, &Enum.empty?/1)
+IO.inspect(Day15.farthest_square(map), label: "Part 2")
