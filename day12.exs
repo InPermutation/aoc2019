@@ -79,6 +79,33 @@ defmodule Day12 do
 
         potential * kinetic
     end
+
+    def cycle_times(stream) do
+        moons = Enum.at(stream, 0)
+        rest = Stream.drop(stream, 1)
+        axes()
+            |> Enum.map(fn axis ->
+                Enum.find_index(rest, &(eq_axis(moons, axis, &1)))
+            end)
+            |> Enum.map(&(&1 + 1))
+    end
+
+    def eq_axis(moons0, axis, moons1) do
+        Enum.zip(moons0, moons1)
+            |> Enum.all?(fn {m0, m1} ->
+                (Keyword.fetch!(m0.pos, axis) == Keyword.fetch!(m1.pos, axis))
+                && (Keyword.fetch!(m0.vel, axis) == Keyword.fetch!(m1.vel, axis))
+            end)
+    end
+
+    def gcd(a, b) when a < 0, do: gcd(-a, b)
+    def gcd(a, b) when b < 0, do: gcd(a, -b)
+    def gcd(a, b) when a < b, do: gcd(b, a)
+    def gcd(a, 0), do: a
+    def gcd(a, b), do: gcd(b, rem(a, b))
+
+    def lcm([a, b]), do: div(abs(a * b), gcd(a, b))
+    def lcm([a | rest]), do: lcm([a, lcm(rest)])
 end
 
 
@@ -91,3 +118,8 @@ simstream
     |> Enum.at(1000)
     |> Day12.total_energy
     |> IO.inspect(label: "Part 1")
+
+simstream
+    |> Day12.cycle_times
+    |> Day12.lcm
+    |> IO.inspect(label: "Part 2")
