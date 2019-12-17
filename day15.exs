@@ -1,5 +1,5 @@
 defmodule Day15 do
-    def breadth_first_search(map, [s | frontier]) do
+    def breadth_first_search(map, [s | frontier], terminate?) do
         [state: state, loc: loc] = s
         if rem(Enum.count(map), 1000) == 0 do
             IO.inspect([loc: loc, fsize: Enum.count(frontier), msize: Enum.count(map)])
@@ -23,23 +23,26 @@ defmodule Day15 do
         d = Map.fetch!(map, loc)
         map = update_map(d, map, next_states)
 
-        exit = Enum.find(next_states, &ns_ox/1)
-        if exit do
-            distance_to(exit, map)
+        frontier = frontier ++
+            Enum.filter(next_states, fn state -> !wall?(state) end)
+        if terminate?.(frontier) do
+            {map, frontier}
         else
-            new_frontier = frontier ++
-                Enum.filter(next_states, fn state -> !wall(state) end)
-            breadth_first_search(map, new_frontier)
+            breadth_first_search(map, frontier, terminate?)
         end
     end
 
-    defp distance_to([state: _state, loc: loc], map) do
+    def distance_to([state: _state, loc: loc], map) do
         Map.fetch!(map, loc)
     end
 
-    defp ns_ox([state: state, loc: _]), do: [2] == state.output
+    def oxy?([state: state, loc: _]), do: [2] == state.output
 
-    defp wall([state: state, loc: _]), do: [0] == state.output
+    def wall?([state: state, loc: _]), do: [0] == state.output
+
+    def found_oxy?(frontier) do
+        Enum.any?(frontier, &oxy?/1)
+    end
 
     defp ewsn({x, y}), do: [
         {1, {x, y - 1}},
@@ -48,7 +51,7 @@ defmodule Day15 do
         {4, {x + 1, y}}
     ]
 
-    def generate_next_states(state, loc, map, frontier) do
+    defp generate_next_states(state, loc, map, frontier) do
         ewsn(loc)
             |> Enum.filter(fn {_ins, el} -> !Map.has_key?(map, el) end)
             |> Enum.filter(fn {_ins, el} -> !in_frontier(frontier, el) end)
@@ -94,7 +97,10 @@ rom = IO.gets("")
 
 origin = {0, 0}
 map = %{ origin => 0 }
-d = Day15.breadth_first_search(map, [ [state: Intcode.init(rom), loc: origin] ])
+frontier = [ [state: Intcode.init(rom), loc: origin] ]
+{ map, frontier } = Day15.breadth_first_search(map, frontier, &Day15.found_oxy?/1)
+[oxy] = frontier |> Enum.filter(&Day15.oxy?/1)
+d = Day15.distance_to(oxy, map)
 
 IO.inspect(d, label: "Part 1")
 
