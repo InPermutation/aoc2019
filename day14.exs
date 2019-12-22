@@ -71,6 +71,16 @@ defmodule Day14 do
     def mul(n, recipe) do
         Enum.map(recipe, fn {amt, target} -> {amt * n, target} end)
     end
+
+    def binary_search(max_ore, products, min \\ 1, max \\ 1000000000000) do
+        halfway = div(min + max, 2)
+        {ore, _leftovers} = produce(products, {halfway, "FUEL"})
+        cond do
+            abs(max - min) < 2 -> halfway
+            ore < max_ore -> binary_search(max_ore, products, halfway, max)
+            ore > max_ore -> binary_search(max_ore, products, min, halfway)
+        end
+    end
 end
 
 products = IO.stream(:stdio, :line)
@@ -80,3 +90,5 @@ products = IO.stream(:stdio, :line)
 {ore, _leftovers} = Day14.produce(products, {1, "FUEL"})
 
 IO.inspect(ore, label: "Part 1")
+
+IO.inspect(Day14.binary_search(1000000000000, products), label: "Part 2")
